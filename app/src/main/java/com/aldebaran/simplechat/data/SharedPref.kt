@@ -1,11 +1,8 @@
-package com.aldebaran.simplechat.database
+package com.aldebaran.simplechat.data
 
 import android.content.Context
-import javax.inject.Inject
 
-class SharedPref @Inject constructor(
-    context: Context
-) {
+class SharedPref(context: Context) {
 
     private val IS_LOGIN = "is_login"
     private val USER = "user_name"

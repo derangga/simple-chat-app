@@ -1,35 +1,37 @@
 package com.aldebaran.simplechat.ui.room
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.DiffUtil
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.aldebaran.simplechat.Injection
 import com.aldebaran.simplechat.R
-import com.aldebaran.simplechat.base.BaseActivity
-import com.aldebaran.simplechat.database.table.Messages
 import com.aldebaran.simplechat.databinding.ActivityMainBinding
 import com.aldebaran.simplechat.helper.goToActivity
-import com.aldebaran.simplechat.helper.initViewModel
+import com.aldebaran.simplechat.ui.UpdateBottomDialog
 import com.aldebaran.simplechat.ui.login.LoginActivity
-import javax.inject.Inject
 
-class MainActivity : BaseActivity<ActivityMainBinding>() {
+class MainActivity : AppCompatActivity() {
 
-    @Inject lateinit var factory: MainFactory
+    private lateinit var factory: MainFactory
     private lateinit var viewModel: MainViewModel
     private lateinit var mAdapter: MessageAdapter
+    private lateinit var binding: ActivityMainBinding
     private lateinit var recyclerObserver: RecyclerView.AdapterDataObserver
 
-    override fun getLayout(): Int {
-        return R.layout.activity_main
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-    override fun onCreateScope(savedInstanceState: Bundle?) {
-        getComponent().inject(this)
-        viewModel = initViewModel(factory)
+        factory = Injection.provideMainFactory(applicationContext)
+        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
+
         viewModel.streamDb()
         setupRecycler()
         eventListener()
@@ -60,9 +62,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     private fun subscribeUI(){
-        viewModel.observerMessage().observe(this, Observer { messages ->
-            mAdapter.submitList(messages)
+        viewModel.chat.observe(this, Observer { messages ->
+            mAdapter.setChatList(messages)
             binding.chatList.smoothScrollToPosition(0)
+        })
+
+        viewModel.bubbleChat.observe(this, Observer { chat ->
+            val bottomSheet = UpdateBottomDialog(chat, viewModel)
+            bottomSheet.show(supportFragmentManager, "")
         })
     }
 
@@ -78,7 +85,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     private fun setupRecycler(){
         val linearManager = LinearLayoutManager(this)
-        mAdapter = MessageAdapter(viewModel.getUserName(), getDiffCallBack())
+        mAdapter = Injection.provideMessageAdapter(viewModel, viewModel.getUserName())
         binding.chatList.apply {
             linearManager.reverseLayout = true
             linearManager.stackFromEnd = true
@@ -108,17 +115,5 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             }
         }
         mAdapter.registerAdapterDataObserver(recyclerObserver)
-    }
-
-    private fun getDiffCallBack(): DiffUtil.ItemCallback<Messages>{
-        return object: DiffUtil.ItemCallback<Messages>(){
-            override fun areItemsTheSame(oldItem: Messages, newItem: Messages): Boolean {
-                return oldItem == newItem
-            }
-
-            override fun areContentsTheSame(oldItem: Messages, newItem: Messages): Boolean {
-                return oldItem.timestamp == newItem.timestamp
-            }
-        }
     }
 }

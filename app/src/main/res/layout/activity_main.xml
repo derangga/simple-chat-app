@@ -1,53 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ui.room.MainActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chat_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/rl_box"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/chat_list"
+    <RelativeLayout
+        android:id="@+id/rl_box"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_24"
+        android:paddingEnd="@dimen/space_24"
+        android:layout_marginBottom="@dimen/space_16"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <EditText
+            android:id="@+id/text_box"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/rl_box"/>
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:maxLines="5"
+            android:layout_toStartOf="@id/btn_send"
+            android:layout_marginEnd="@dimen/space_16"
+            android:layout_alignParentBottom="true"
+            android:hint="Type a message"
+            android:importantForAutofill="no" />
 
-        <RelativeLayout
-            android:id="@+id/rl_box"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:paddingStart="@dimen/space_24"
-            android:paddingEnd="@dimen/space_24"
-            android:layout_marginBottom="@dimen/space_16"
-            app:layout_constraintBottom_toBottomOf="parent">
+        <ImageButton
+            android:id="@+id/btn_send"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_send"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/rd_send_btn"/>
 
-            <EditText
-                android:id="@+id/text_box"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:maxLines="5"
-                android:layout_toStartOf="@id/btn_send"
-                android:layout_marginEnd="@dimen/space_16"
-                android:layout_alignParentBottom="true"
-                android:hint="Type a message"
-                android:importantForAutofill="no" />
+    </RelativeLayout>
 
-            <ImageButton
-                android:id="@+id/btn_send"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:src="@drawable/ic_send"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:background="@drawable/rd_send_btn"/>
-
-        </RelativeLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</layout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,36 +3,35 @@ package com.aldebaran.simplechat.ui.login
 import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import com.aldebaran.simplechat.Injection
 import com.aldebaran.simplechat.R
-import com.aldebaran.simplechat.base.BaseActivity
 import com.aldebaran.simplechat.databinding.ActivityLoginBinding
 import com.aldebaran.simplechat.helper.*
 import com.aldebaran.simplechat.helper.Result.*
 import com.aldebaran.simplechat.ui.room.MainActivity
-import javax.inject.Inject
 
-class LoginActivity : BaseActivity<ActivityLoginBinding>() {
+class LoginActivity : AppCompatActivity() {
 
-    @Inject lateinit var factory: LoginFactory
+    private lateinit var factory: LoginFactory
     private lateinit var viewModel: LoginViewModel
-    private lateinit var mailWatcher: TextStream
-    private lateinit var passwordWatcher: TextStream
+    private lateinit var binding: ActivityLoginBinding
+
     private lateinit var progressDialogBuilder: AlertDialog.Builder
     private lateinit var progressDialog: Dialog
 
-    override fun getLayout(): Int {
-        return R.layout.activity_login
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-    override fun onCreateScope(savedInstanceState: Bundle?) {
-        getComponent().inject(this)
-        viewModel = initViewModel(factory)
-        progressDialogBuilder = AlertDialog.Builder(this)
-        progressDialogBuilder.setView(R.layout.dialog_progress)
-        progressDialog = progressDialogBuilder.create()
-        progressDialog.setCancelable(false)
-        initWatcher()
+        factory = Injection.provideLoginFactory(applicationContext)
+        viewModel = ViewModelProvider(this, factory)[LoginViewModel::class.java]
+
+        initLoadingDialog()
         subscribeUI()
 
         if(viewModel.getLoginStatus()){
@@ -44,7 +43,6 @@ class LoginActivity : BaseActivity<ActivityLoginBinding>() {
     override fun onStart() {
         super.onStart()
         binding.btnLogin.setOnClickListener {
-            hideErrorText()
             viewModel.validator(
                 binding.etEmail.text.toString(),
                 binding.etPassword.text.toString()
@@ -52,50 +50,26 @@ class LoginActivity : BaseActivity<ActivityLoginBinding>() {
         }
     }
 
-    override fun onDestroy() {
-        removeWatcher()
-        super.onDestroy()
+    private fun initLoadingDialog(){
+        progressDialogBuilder = AlertDialog.Builder(this)
+        progressDialogBuilder.setView(R.layout.dialog_progress)
+        progressDialog = progressDialogBuilder.create()
+        progressDialog.setCancelable(false)
     }
 
-    private fun initWatcher(){
-        mailWatcher = object: TextStream(){
-            override fun onWrite(text: String, isEmpty: Boolean) {
-                if(isEmpty){
-                    binding.tvEmailErr.visible()
-                    binding.tvEmailErr.text = getString(R.string.mail_empty)
-                } else binding.tvEmailErr.gone()
-            }
-        }
-
-        passwordWatcher = object: TextStream(){
-            override fun onWrite(text: String, isEmpty: Boolean) {
-                if(isEmpty){
-                    binding.tvPasswordErr.visible()
-                    binding.tvPasswordErr.text = getString(R.string.password_empty)
-                } else binding.tvPasswordErr.gone()
-            }
-        }
-
-        binding.etEmail.addTextChangedListener(mailWatcher)
-        binding.etPassword.addTextChangedListener(passwordWatcher)
+    private fun showLoading(){
+        progressDialog.show()
     }
 
-    private fun removeWatcher(){
-        binding.etEmail.removeTextChangedListener(mailWatcher)
-        binding.etPassword.removeTextChangedListener(passwordWatcher)
+    private fun hideLoading(){
+        progressDialog.dismiss()
     }
 
     private fun subscribeUI(){
         viewModel.validator.observe(this, Observer { errorId ->
             when(errorId){
-                0 -> {
-                    binding.tvEmailErr.text = getString(R.string.invalid_email)
-                    binding.tvEmailErr.visible()
-                }
-                1 -> {
-                    binding.tvPasswordErr.text = getString(R.string.invalid_password)
-                    binding.tvPasswordErr.visible()
-                }
+                0 -> binding.etEmail.error = getString(R.string.invalid_email)
+                1 -> binding.etPassword.error = getString(R.string.invalid_password)
                 2 -> {
                     showLoading()
                     viewModel.doLogin(binding.etEmail.text.toString(),
@@ -105,31 +79,22 @@ class LoginActivity : BaseActivity<ActivityLoginBinding>() {
         })
 
         viewModel.loginState.observe(this, Observer { result ->
-            when(result){
-                SUCCESS -> {
-                    hideLoading()
-                    goToActivity<MainActivity>()
-                    finish()
+            result?.also { status ->
+                when(status){
+                    LOADING -> { showLoading() }
+                    SUCCESS -> {
+                        hideLoading()
+                        viewModel.saveSession(binding.etEmail.text.toString())
+                        goToActivity<MainActivity>()
+                        finish()
+
+                    }
+                    ERROR -> {
+                        hideLoading()
+                        Toast.makeText(this, "Google Login", Toast.LENGTH_SHORT).show()
+                    }
                 }
-                ERROR -> {
-                    hideLoading()
-                    showToast("Login Error")
-                }
-                else -> hideLoading()
             }
         })
-    }
-
-    private fun hideErrorText(){
-        binding.tvEmailErr.gone()
-        binding.tvPasswordErr.gone()
-    }
-
-    private fun showLoading(){
-        progressDialog.show()
-    }
-
-    private fun hideLoading(){
-        progressDialog.dismiss()
     }
 }
