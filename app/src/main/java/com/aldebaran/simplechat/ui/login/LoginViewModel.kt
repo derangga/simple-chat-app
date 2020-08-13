@@ -1,5 +1,6 @@
 package com.aldebaran.simplechat.ui.login
 
+import android.util.Patterns
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.aldebaran.simplechat.data.SharedPref
@@ -20,7 +21,7 @@ class LoginViewModel(
     fun getLoginStatus() = pref.getIsLogin()
 
     fun validator(email: String, password: String){
-        if(email.isEmpty() || !email.contains("@")) {
+        if(email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             validator.value = 0
         }
         else if(password.isEmpty() || password.length < 6) {
