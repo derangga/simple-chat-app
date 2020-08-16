@@ -1,15 +1,13 @@
 package com.aldebaran.simplechat.ui.room
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.aldebaran.simplechat.Injection
+import com.aldebaran.simplechat.ServicesLocator
 import com.aldebaran.simplechat.R
 import com.aldebaran.simplechat.databinding.ActivityMainBinding
 import com.aldebaran.simplechat.helper.goToActivity
@@ -20,27 +18,19 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var factory: MainFactory
     private lateinit var viewModel: MainViewModel
-    private lateinit var mAdapter: MessageAdapter
+    private lateinit var mAdapter: ChatAdapter
     private lateinit var binding: ActivityMainBinding
-    private lateinit var recyclerObserver: RecyclerView.AdapterDataObserver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        factory = Injection.provideMainFactory(applicationContext)
-        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
-
-        viewModel.streamDb()
+        initViewModel()
         setupRecycler()
         eventListener()
         subscribeUI()
-    }
-
-    override fun onDestroy() {
-        mAdapter.unregisterAdapterDataObserver(recyclerObserver)
-        super.onDestroy()
+        viewModel.streamDb()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -59,6 +49,11 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun initViewModel(){
+        factory = ServicesLocator.provideMainFactory(applicationContext)
+        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
     }
 
     private fun subscribeUI(){
@@ -85,35 +80,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecycler(){
         val linearManager = LinearLayoutManager(this)
-        mAdapter = Injection.provideMessageAdapter(viewModel, viewModel.getUserName())
+        mAdapter = ChatAdapter(viewModel, viewModel.getUserName())
         binding.chatList.apply {
-            linearManager.reverseLayout = true
             linearManager.stackFromEnd = true
             layoutManager = linearManager
             adapter = mAdapter
-            addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
-                run {
-                    if (bottom < oldBottom) {
-                        postDelayed(
-                            { smoothScrollToPosition(0) },
-                            100
-                        )
-                    }}
-            }
         }
-        recyclerObserver = object: RecyclerView.AdapterDataObserver(){
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                super.onItemRangeInserted(positionStart, itemCount)
-                val dataCount = mAdapter.itemCount
-                val lastVisiblePosition = linearManager.findLastCompletelyVisibleItemPosition()
-                if(lastVisiblePosition == -1 ||
-                    (positionStart >= (dataCount - 1) &&
-                            lastVisiblePosition == (positionStart - 1))
-                ){
-                    binding.chatList.smoothScrollToPosition(0)
-                }
-            }
-        }
-        mAdapter.registerAdapterDataObserver(recyclerObserver)
     }
 }

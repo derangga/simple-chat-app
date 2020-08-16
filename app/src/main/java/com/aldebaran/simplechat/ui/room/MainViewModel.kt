@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aldebaran.simplechat.data.SharedPref
 import com.aldebaran.simplechat.data.Chat
+import com.aldebaran.simplechat.helper.toDateTime
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers.Default
@@ -44,8 +45,6 @@ class MainViewModel(
                         val message = child.getValue(Chat::class.java)
                         message?.key = child.key
                         message ?: Chat()
-                    }.sortedBy { chat ->
-                        chat.createdAt
                     }
                     _chat.postValue(dataChat)
                 }
@@ -64,7 +63,7 @@ class MainViewModel(
     fun sendMessage(message: String, from: String){
         val millis = System.currentTimeMillis()
         val messageObj =
-            Chat(from, message, millis)
+            Chat(from, message, millis.toDateTime())
         firebaseRef.child(MESSAGE).push().setValue(messageObj)
     }
 
@@ -76,7 +75,6 @@ class MainViewModel(
         val childUpdate = hashMapOf<String, Any>(
             "/$MESSAGE/${chat.key}" to chat.toMap()
         )
-
         firebaseRef.updateChildren(childUpdate)
     }
 
@@ -90,5 +88,10 @@ class MainViewModel(
 
     fun handleLeadingSpace(text: String): String{
         return text.trim().replace("^\\s+|\\s+$|^[\\n\\r]|[\\n\\r]$", "")
+    }
+
+    override fun onCleared() {
+        firebaseRef.removeEventListener(firebaseListener)
+        super.onCleared()
     }
 }

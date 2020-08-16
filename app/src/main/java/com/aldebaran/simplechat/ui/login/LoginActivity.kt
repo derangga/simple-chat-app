@@ -7,11 +7,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.aldebaran.simplechat.Injection
+import com.aldebaran.simplechat.ServicesLocator
 import com.aldebaran.simplechat.R
 import com.aldebaran.simplechat.databinding.ActivityLoginBinding
 import com.aldebaran.simplechat.helper.*
-import com.aldebaran.simplechat.helper.Result.*
+import com.aldebaran.simplechat.ui.login.Result.*
+import com.aldebaran.simplechat.ui.login.Credential.*
 import com.aldebaran.simplechat.ui.room.MainActivity
 
 class LoginActivity : AppCompatActivity() {
@@ -28,9 +29,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        factory = Injection.provideLoginFactory(applicationContext)
-        viewModel = ViewModelProvider(this, factory)[LoginViewModel::class.java]
-
+        initViewModel()
         initLoadingDialog()
         subscribeUI()
 
@@ -43,11 +42,16 @@ class LoginActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         binding.btnLogin.setOnClickListener {
-            viewModel.validator(
+            viewModel.checkCredential(
                 binding.etEmail.text.toString(),
                 binding.etPassword.text.toString()
             )
         }
+    }
+
+    private fun initViewModel(){
+        factory = ServicesLocator.provideLoginFactory(applicationContext)
+        viewModel = ViewModelProvider(this, factory)[LoginViewModel::class.java]
     }
 
     private fun initLoadingDialog(){
@@ -66,20 +70,22 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun subscribeUI(){
-        viewModel.validator.observe(this, Observer { errorId ->
-            when(errorId){
-                0 -> binding.etEmail.error = getString(R.string.invalid_email)
-                1 -> binding.etPassword.error = getString(R.string.invalid_password)
-                2 -> {
-                    showLoading()
-                    viewModel.doLogin(binding.etEmail.text.toString(),
-                        binding.etPassword.text.toString())
+        viewModel.validator.observe(this, Observer { credential ->
+            credential?.let {
+                when( it ){
+                    INVALID_EMAIL -> binding.etEmail.error = getString(R.string.invalid_email)
+                    INVALID_PASSWORD -> binding.etPassword.error = getString(R.string.invalid_password)
+                    ALL_DATA_VALID -> {
+                        showLoading()
+                        viewModel.doLogin(binding.etEmail.text.toString(),
+                            binding.etPassword.text.toString())
+                    }
                 }
             }
         })
 
         viewModel.loginState.observe(this, Observer { result ->
-            result?.also { status ->
+            result?.let { status ->
                 when(status){
                     LOADING -> { showLoading() }
                     SUCCESS -> {

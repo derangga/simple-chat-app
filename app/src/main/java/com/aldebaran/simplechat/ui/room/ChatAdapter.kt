@@ -9,7 +9,7 @@ import com.aldebaran.simplechat.databinding.AdapterBubbleChatBinding
 import com.aldebaran.simplechat.databinding.AdapterBubbleOpponentChatBinding
 import com.aldebaran.simplechat.helper.toSimpleDateTime
 
-class MessageAdapter(
+class ChatAdapter(
     private val viewModel: MainViewModel,
     private val me: String
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -54,13 +54,12 @@ class MessageAdapter(
     }
 
     inner class MyChatView(
-        root: View, private val binds: AdapterBubbleChatBinding
+        root: View, private val binding: AdapterBubbleChatBinding
     ): RecyclerView.ViewHolder(root){
         fun bindView(chat: Chat){
-            binds.message.text = chat.message.orEmpty()
-            binds.time.text = chat.createdAt.toSimpleDateTime()
-
-            binds.bubble.setOnLongClickListener {
+            binding.message.text = chat.message.orEmpty()
+            binding.time.text = chat.createdAt.toSimpleDateTime()
+            binding.bubble.setOnLongClickListener {
                 viewModel.onBubbleChatLongClick(chat)
                 true
             }
@@ -68,12 +67,12 @@ class MessageAdapter(
     }
 
     inner class OpponentView(
-        root: View, private val binds: AdapterBubbleOpponentChatBinding
+        root: View, private val binding: AdapterBubbleOpponentChatBinding
     ): RecyclerView.ViewHolder(root){
         fun bindView(chat: Chat){
-            binds.from.text = chat.from.orEmpty()
-            binds.message.text = chat.message.orEmpty()
-            binds.time.text = chat.createdAt.toSimpleDateTime()
+            binding.from.text = chat.from.orEmpty()
+            binding.message.text = chat.message.orEmpty()
+            binding.time.text = chat.createdAt.toSimpleDateTime()
         }
     }
 }

@@ -5,10 +5,9 @@ import com.aldebaran.simplechat.data.SharedPref
 import com.aldebaran.simplechat.ui.login.LoginFactory
 import com.aldebaran.simplechat.ui.room.MainFactory
 import com.aldebaran.simplechat.ui.room.MainViewModel
-import com.aldebaran.simplechat.ui.room.MessageAdapter
+import com.aldebaran.simplechat.ui.room.ChatAdapter
 
-object Injection {
-
+object ServicesLocator {
     fun provideSharedPref(context: Context): SharedPref{
         return SharedPref(context)
     }
@@ -23,7 +22,7 @@ object Injection {
         return MainFactory(sharedPref)
     }
 
-    fun provideMessageAdapter(viewModel: MainViewModel, userName: String): MessageAdapter{
-        return MessageAdapter(viewModel, userName)
+    fun provideMessageAdapter(viewModel: MainViewModel, userName: String): ChatAdapter{
+        return ChatAdapter(viewModel, userName)
     }
 }

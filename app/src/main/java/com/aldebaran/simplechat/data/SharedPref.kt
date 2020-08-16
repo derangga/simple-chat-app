@@ -4,10 +4,10 @@ import android.content.Context
 
 class SharedPref(context: Context) {
 
-    private val IS_LOGIN = "is_login"
-    private val USER = "user_name"
-    private val KEY = "USER_PREFS"
-    private var sharedPrefs = context.getSharedPreferences(KEY, Context.MODE_PRIVATE)
+    private val sharedPrefs by lazy { context.getSharedPreferences(KEY, Context.MODE_PRIVATE) }
+    private val IS_LOGIN = "IS_LOGIN"
+    private val USER = "userName"
+    private val KEY = "session"
 
     fun saveIsLogin(status: Boolean){
         sharedPrefs.edit()
